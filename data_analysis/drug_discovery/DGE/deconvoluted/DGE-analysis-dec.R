@@ -69,6 +69,8 @@ if (file.exists(paste0(sample_dir, "analysis/deconvolution/binded_exp_Seurat.RDS
 		non_zero_fraction_spots <- names(which(fractions != 0))
 		exp_mat <- t(apply(exp_mat, 1, function(x) x / fractions))
 		exp_mat[is.na(exp_mat)] <- 0
+		# to avoid NA in non_zero_fraction_spots
+		non_zero_fraction_spots <- non_zero_fraction_spots[!is.na(non_zero_fraction_spots)]
 		exp_mat <- exp_mat[, non_zero_fraction_spots, drop = FALSE]
 		
 		ct_exp[[cell_type]] <- exp_mat
