@@ -8,13 +8,13 @@ library(Seurat)
 library(data.table)
 library(dplyr)
 library(stringr)
-
+options(future.globals.maxSize = 10 * 1024 * 1024 * 1024)
 ### Define paths and variables
 args <- commandArgs(trailingOnly=TRUE)
 st_dir <- "/projects/b1131/SpatialT"
 dt_dir <- "/projects/b1131/SpatialT/drug-target/"
 sample_dir <- args[1]
-# sample_dir <- "/projects/b1131/SpatialT/10x/PID1/DS1D/DS1D.1/"
+#sample_dir <- "/projects/b1131/SpatialT/10x/PID385/DS385A/DS385A.2/"
 # sample_dir <- "/projects/b1131/SpatialT/DBiT-seq/PID150/DS150A/DS150A.GSM4096261/"
 
 ds_name <- str_split(sample_dir, '/')[[1]][7]
@@ -56,7 +56,7 @@ if (file.exists(paste0(sample_dir, "analysis/deconvolution/binded_exp_Seurat.RDS
 	ct_exp <- list()
 	total_cells_each_ct <- list()
 	for (cell_type in all_cell_types) {
-		# cell_type <- "Malignant"
+		#cell_type <- "B.cell"
 		# cell_type <- all_cell_types[6]
 		exp_mat <- fread(paste0(sample_dir, "/analysis/deconvolution/counts_", cell_type, "_deconv_only.csv"))
 		genes <- exp_mat$gene
@@ -69,6 +69,7 @@ if (file.exists(paste0(sample_dir, "analysis/deconvolution/binded_exp_Seurat.RDS
 		non_zero_fraction_spots <- names(which(fractions != 0))
 		exp_mat <- t(apply(exp_mat, 1, function(x) x / fractions))
 		exp_mat[is.na(exp_mat)] <- 0
+		non_zero_fraction_spots <- non_zero_fraction_spots[!is.na(non_zero_fraction_spots)]
 		exp_mat <- exp_mat[, non_zero_fraction_spots, drop = FALSE]
 		
 		ct_exp[[cell_type]] <- exp_mat
@@ -103,6 +104,7 @@ annotations <- binded_so[["cell_type"]]$cell_type
 names(annotations) <- rownames(binded_so[["cell_type"]])
 Idents(binded_so) <- annotations
 
+options(future.globals.maxSize = 10 * 1024 * 1024 * 1024)
 if (length(table(binded_so[["cell_type"]])) == 1) {
 	fwrite(data.frame(gene = character(0), cluster = integer(0), avg_log2FC = numeric(0), pct.1 = numeric(0), pct.2 = numeric(0), p_val_adj = numeric(0)), paste0(output_dir, "/DGE_cell_types_dec.tsv"), sep = "\t")
 	cat("\n\n### Only one annotated cell type -- skipping DGE analysis (cell types).")
